@@ -1,0 +1,11 @@
+{
+  "name": "microle",
+  "version": "2.0.0-rc9",
+  "description":"minimalistic microbit BT LE",
+  "license": "MIT",
+  "dependencies": {
+    "microbit": "virtualabs/microbit#v2.0.0-blesniff"
+  },
+  "targetDependencies": {},
+  "bin": "./source"
+}
