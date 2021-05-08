@@ -72,7 +72,7 @@ class Link(object):
             except ValueError:
                 self.rx_buffer = bytes()
 
-        # check if we got a valid packet
+        # check if we got a valid packet
         if len(self.rx_buffer) < HEADERSIZE:
             return None
 
