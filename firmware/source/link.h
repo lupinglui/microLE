@@ -32,3 +32,5 @@ public:
 	bool readPacket(T_CMD* cmd, uint8_t *buf, int *size, uint8_t *flags);
 	bool sendPacket(T_CMD cmd, uint8_t *buf, int size, uint8_t flags);
 };
+
+extern Link* usbLink;
