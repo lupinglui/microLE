@@ -1,0 +1,6 @@
+firmware/build/*
+firmware/dist/*
+firmware/yotta_modules/*
+firmware/yotta_targets/*
+.yotta.json
+*.pyc
