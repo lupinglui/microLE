@@ -30,7 +30,7 @@ public:
 
 	/* Interface. */
 	bool readPacket(T_CMD* cmd, uint8_t *buf, int *size, uint8_t *flags);
-	bool sendPacket(T_CMD cmd, uint8_t *buf, int size, uint8_t flags);
+	bool sendPacket(T_CMD cmd, uint8_t *buf, int size = 0, uint8_t flags = 0);
 };
 
 extern Link* usbLink;

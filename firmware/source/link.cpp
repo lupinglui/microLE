@@ -95,6 +95,9 @@ bool Link::readPacket(T_CMD* cmd, uint8_t *buf, int *bufSize, uint8_t *flags)
 
 bool Link::sendPacket(T_CMD cmd, uint8_t *payload, int size, uint8_t flags)
 {
+	if (size == 0)
+		size = strlen((char*) payload);
+
 	int i;
 	uint8_t header[4];
 	uint8_t checksum = 0xff;
@@ -127,3 +130,4 @@ bool Link::sendPacket(T_CMD cmd, uint8_t *payload, int size, uint8_t flags)
 
 	return true;
 }
+
