@@ -6,6 +6,8 @@
 
 MicroBit uBit;
 Link* usbLink;
+bool receiving = false;
+uint8_t rec_buf[MAX_PACKET_SIZE];
 
 void print_packet(uint8_t* packet, int size, uint8_t flags = 0xff){
 	if (flags != 0xff){
@@ -23,20 +25,29 @@ void print_packet(uint8_t* packet, int size, uint8_t flags = 0xff){
 
 extern "C" void RADIO_IRQHandler(void)
 {
-	usbLink->sendPacket(TEST, (uint8_t*) "IRQ_HANDLER_START", strlen((char*) "IRQ_HANDLER_START"), 0);
-
+	/*
 	if (NRF_RADIO->EVENTS_READY) {
 		NRF_RADIO->EVENTS_READY = 0;
-		usbLink->sendPacket(TEST, (uint8_t*) "IRQ EVENTS_READY", strlen((char*) "IRQ EVENTS_READY"), 0);
+		//usbLink->sendPacket(TEST, (uint8_t*) "IRQ EVENTS_READY", strlen("IRQ EVENTS_READY"), 0);
 		NRF_RADIO->TASKS_START = 1;
 	}
-
+	*/
 	if (NRF_RADIO->EVENTS_END) {
         NRF_RADIO->EVENTS_END = 0;
-		usbLink->sendPacket(TEST, (uint8_t*) "IRQ EVENTS_END", strlen((char*) "IRQ EVENTS_END"), 0);
-
-		// continue TODO only for receiver, sender should not repeat
-		//NRF_RADIO->TASKS_START = 1;
+		//usbLink->sendPacket(TEST, (uint8_t*) "IRQ EVENTS_END", strlen("IRQ EVENTS_END"), 0);
+		if (receiving){
+			char rssi[8];
+			itoa(NRF_RADIO->RSSISAMPLE, rssi);
+			usbLink->sendPacket(TEST, (uint8_t*) rssi, strlen(rssi), 0);
+			//receiving = false;
+			if (NRF_RADIO->CRCSTATUS == 1) {
+				//usbLink->sendPacket(TEST, (uint8_t*) "CRC==1", strlen("CRC==1"), 0);
+				usbLink->sendPacket(TEST, rec_buf, 16, 0);
+			}
+			else
+				usbLink->sendPacket(TEST, (uint8_t*) "CRC!=1", strlen("CRC==1"), 0);
+			NRF_RADIO->TASKS_START = 1;
+		}	
 	}
 }
 
@@ -53,20 +64,23 @@ void dispatchCMD(T_CMD cmd, uint8_t* packet, int size, uint8_t flags)
 		usbLink->sendPacket(cmd, packet, size, flags);
 		break;
 	case SEND:
-		strcpy((char*) buf, "SENDING");
-		usbLink->sendPacket(TEST, buf, strlen((char*) buf), 0);
-		usbLink->sendPacket(cmd, packet, strlen((char*) packet), flags);
-		radio_send((uint32_t) 0x554433, 11, (uint8_t*) packet, size);
-		strcpy((char*) buf, "SENT");
-		usbLink->sendPacket(TEST, buf, strlen((char*) buf), 0);
+		while(true){
+			strcpy((char*) buf, "SENDING");
+			usbLink->sendPacket(TEST, buf, strlen((char*) buf), 0);
+			//strcpy((char*) buf, "AAAAAAAA");			
+			//radio_send((uint32_t) 0x554433, 11, (uint8_t*) buf, 8);
+			inquiry();
+			strcpy((char*) buf, "SENT");
+			usbLink->sendPacket(TEST, buf, strlen((char*) buf), 0);
+			wait_ms(10);
+		}
 		break;
 	case RECV:
 		strcpy((char*) buf, "RECEIVING");
 		usbLink->sendPacket(TEST, buf, strlen((char*) buf), 0);
-		strcpy((char*) buf, "");
-		radio_receive((uint32_t) 0xAABBCC, 11, buf);
-		//print_packet(buf, size, flags);
-		usbLink->sendPacket(cmd, buf, strlen((char*) buf), flags);
+		//strcpy((char*) rec_buf, "");
+		receiving = true;
+		radio_receive((uint32_t) 0xAABBCC, 11, rec_buf);
 		break;
 	default:
 		strcpy((char*) buf, "NOPE");
@@ -102,7 +116,6 @@ int main()
 	radio_init();
 
 	uBit.display.scroll("HI");
-
 	while (1)
 	{
 		//uBit.display.scroll("R!");
